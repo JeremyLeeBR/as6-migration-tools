@@ -555,6 +555,10 @@ def main():
             # Boolean flag to indicate whether deprecated math functions were found
             found_deprecated_math = bool(deprecated_math_files)
 
+            # Check for referenced objects in .pkg files
+            log("\n\nScanning for referenced objects in .pkg files...")
+            reference_objects = check_reference_objects(args.project_path)
+
             log("\n\nChecking project and hardware files for compatibility...")
             file_patterns = ["*.apj", "*.hw"]
             compatibility_results = check_files_for_compatibility(
@@ -747,6 +751,23 @@ def main():
             if safety_results:
                 for entry in safety_results:
                     log(f"- {entry}")
+            else:
+                log_v("- None")
+
+            log("\n\nThe following referenced objects were found in .pkg files:")
+            if reference_objects:
+                # Group by package file for organized output
+                pkg_groups = {}
+                for ref_obj in reference_objects:
+                    pkg_name = os.path.basename(ref_obj.pkg_file_path)
+                    if pkg_name not in pkg_groups:
+                        pkg_groups[pkg_name] = []
+                    pkg_groups[pkg_name].append(ref_obj)
+                
+                for pkg_name, refs in sorted(pkg_groups.items()):
+                    log(f"\nIn {pkg_name}:")
+                    for ref_obj in refs:
+                        log(f"- {ref_obj.object_name} ({ref_obj.object_type})")
             else:
                 log_v("- None")
 
